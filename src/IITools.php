@@ -2,9 +2,10 @@
 
 namespace Immersioninteractive\ToolsController;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Artisan;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class IITools extends Controller
 {
@@ -61,6 +62,7 @@ class IITools extends Controller
         } catch (\Exception $e) {
             return $e->getMessage();
         }
+        
         return true;
     }
 
