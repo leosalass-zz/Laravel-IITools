@@ -1,0 +1,32 @@
+{
+    "name": "immersioninteractive/ToolsController",
+    "type": "library",
+    "description": "Generic Controller class to make our work easier with Laravel",
+    "keywords": ["Laravel","Tools"],
+    "homepage": "https://github.com/leosalass/Laravel-IITools",
+    "license": "MIT",
+    "authors": [{
+        "name": "Leonardo Salas",
+        "email": "info@immersioninteractive.com",
+        "role": "Full Stack Developer"
+    }],
+    "minimum-stability": "dev",
+    "require": {        
+        "immersioninteractive/ResponseController": "dev-master"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Immersioninteractive\\ToolsController\\IIToolsServiceProvider"
+            ],
+            "aliases": {
+                "IITools": "Immersioninteractive\\ToolsController\\IIToolsFacade"
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Immersioninteractive\\ToolsController\\": "src/"
+        }
+    }
+}
