@@ -343,4 +343,43 @@ class IITools extends Controller
 
         return $array;
     }
+
+    public static function log_request($fichero, $data_array){
+        try {          
+
+            if (!file_exists($fichero)) {
+                $myfile = fopen($fichero, "w") or die("Unable to open file!");
+                fwrite($myfile, "**** starts here ***** \n");
+                fclose($myfile);
+            }
+            
+            // Abre el fichero para obtener el contenido existente            
+            $actual = file_get_contents($fichero);
+            
+            $log = "*****************************\n";
+            $log .= 'time: ' . date('Y-m-d H:i:s') . "\n\n";
+            //$log .= "***********************************************************\n\n";
+            //$log .= "DATA ARRAY: " . json_encode($data_array) . "\n\n";
+            
+            $keys = array_keys($data_array);
+            
+            foreach($keys as $key){
+                $content = (is_array($data_array[$key])) ? json_encode($data_array[$key]) : $data_array[$key];
+                $log .= "$key: $content \n";
+            }
+            
+            $log .= "\n\n\n";
+            
+            $log .= $actual;
+            
+            // Escribe el contenido al fichero
+            file_put_contents($fichero, $log);
+            
+            return;
+            
+        } catch (\Exception $e) {
+            /** TODO: check why the exception is not catching errors */
+            file_put_contents($fichero, $e->getMessage());
+        }
+    }
 }
