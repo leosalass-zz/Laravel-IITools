@@ -11,6 +11,49 @@ class IITools extends Controller
 {
     public static $base_image_path = 'uploads/images/';
 
+    public static function single_base64_upload($base64_string, $directory_path = null)
+    {
+        if($directory_path == null){
+            $directory_path = 'defaults';
+        }
+
+        $extension = 'jpg';
+        $file_name = date("Ymdhis") . rand(11111, 99999);
+        $full_name = "$file_name.$extension";
+        $url = URL::to('/') . DIRECTORY_SEPARATOR . self::$base_image_path . $directory_path . DIRECTORY_SEPARATOR . $full_name;
+
+        $base_directories = explode('/', self::$base_image_path . $directory_path);
+        $base_path = '';
+        foreach ($base_directories as $directory_name) {
+            $base_path .= $directory_name . '/';
+            if (!file_exists($base_path)) {
+                mkdir($base_path);
+            }
+        }
+
+        // open the output file for writing
+        $ifp = fopen(public_path($base_path . DIRECTORY_SEPARATOR . $full_name), 'wb');
+
+        // split the string on commas
+        // $data[ 0 ] == "data:image/png;base64"
+        // $data[ 1 ] == <actual base64 string>
+        $data = explode(',', $base64_string);
+
+        // we could add validation here with ensuring count( $data ) > 1
+        fwrite($ifp, base64_decode($data[1]));
+
+        // clean up the file resource
+        fclose($ifp);
+        
+        $response = [
+            'url' => $url,
+            'filename' => $full_name,
+            'path' => DIRECTORY_SEPARATOR . self::$base_image_path . $directory_path,
+        ];
+
+        return $response;
+    }
+
     public static function base64_to_file($base64_string, $output_file, $directory_path = 'default')
     {
         $dir_array = explode('/', $directory_path);
