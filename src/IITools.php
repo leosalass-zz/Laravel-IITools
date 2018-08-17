@@ -2,9 +2,6 @@
 
 namespace Immersioninteractive\ToolsController;
 
-use Artisan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,18 +9,67 @@ class IITools extends Controller
 {
     public static $base_image_path = 'uploads/images/';
 
-    public static function single_base64_upload($base64_string, $directory_path = null)
+    public static function file_upload($target_dir, $file_name, $file_limit_in_KB = null, $override = false)
     {
-        if($directory_path == null){
-            $directory_path = 'defaults';
+        self::directories($target_dir);
+
+        $target_file = self::$base_image_path . $target_dir . DIRECTORY_SEPARATOR . $file_name;
+        $uploadOk = 1;
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Check if image file is a actual image or fake image
+        if (isset($_POST["submit"])) {
+            $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+            if ($check !== false) {
+                //echo "File is an image - " . $check["mime"] . ".";
+                $uploadOk = 1;
+            } else {
+                //echo "File is not an image.";
+                $uploadOk = 0;
+            }
         }
 
-        $extension = 'jpg';
-        $file_name = date("Ymdhis") . rand(11111, 99999);
-        $full_name = "$file_name.$extension";
-        $url = URL::to('/') . DIRECTORY_SEPARATOR . self::$base_image_path . $directory_path . DIRECTORY_SEPARATOR . $full_name;
+        // Check if file already exists
+        if ($override) {
+            if (file_exists($target_file)) {
+                echo "Sorry, file already exists.";
+                $uploadOk = 0;
+            }
+        }
+        // Check file size
+        if ($file_limit_in_KB > 0) {
+            if ($_FILES["fileToUpload"]["size"] > 50000000) {
+                echo "Sorry, your file is too large.";
+                $uploadOk = 0;
+            }
+        }
 
-        $base_directories = explode('/', self::$base_image_path . $directory_path);
+        // Allow certain file formats
+        if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+            && $imageFileType != "gif") {
+            echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+            $uploadOk = 0;
+        }
+
+        // Check if $uploadOk is set to 0 by an error
+        if ($uploadOk == 0) {
+            echo "Sorry, your file was not uploaded.";
+            // if everything is ok, try to upload file
+        } else {
+            //if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+            if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+                //echo "The file " . basename($_FILES["fileToUpload"]["name"]) . " has been uploaded.";
+            } else {
+                //echo "Sorry, there was an error uploading your file.";
+            }
+        }
+    }
+
+    public static function directories($directory_path){
+
+        $dir_array = explode('/', $directory_path);
+
+        $base_directories = ['uploads', 'images'];
         $base_path = '';
         foreach ($base_directories as $directory_name) {
             $base_path .= $directory_name . '/';
@@ -31,28 +77,16 @@ class IITools extends Controller
                 mkdir($base_path);
             }
         }
-
-        // open the output file for writing
-        $ifp = fopen(public_path($base_path . DIRECTORY_SEPARATOR . $full_name), 'wb');
-
-        // split the string on commas
-        // $data[ 0 ] == "data:image/png;base64"
-        // $data[ 1 ] == <actual base64 string>
-        $data = explode(',', $base64_string);
-
-        // we could add validation here with ensuring count( $data ) > 1
-        fwrite($ifp, base64_decode($data[1]));
-
-        // clean up the file resource
-        fclose($ifp);
         
-        $response = [
-            'url' => $url,
-            'filename' => $full_name,
-            'path' => DIRECTORY_SEPARATOR . self::$base_image_path . $directory_path,
-        ];
+        $current_dirname = '';
+        foreach ($dir_array as $directory_name) {
+            $current_dirname .= $directory_name . '/';
+            if (!file_exists($base_path . $current_dirname)) {
+                mkdir($base_path . $current_dirname);
+            }
+        }
 
-        return $response;
+        return $base_path;
     }
 
     public static function base64_to_file($base64_string, $output_file, $directory_path = 'default')
@@ -106,7 +140,7 @@ class IITools extends Controller
         } catch (\Exception $e) {
             return $e->getMessage();
         }
-        
+
         return true;
     }
 
@@ -375,7 +409,7 @@ class IITools extends Controller
             "restored",
             "isForceDeleting",
             "getDeletedAtColumn",
-            "getQualifiedDeletedAtColumn"
+            "getQualifiedDeletedAtColumn",
         ];
 
         foreach ($removeKeys as $del_val) {
@@ -388,39 +422,40 @@ class IITools extends Controller
         return $array;
     }
 
-    public static function log_request($fichero, $data_array){
-        try {          
+    public static function log_request($fichero, $data_array)
+    {
+        try {
 
             if (!file_exists($fichero)) {
                 $myfile = fopen($fichero, "w") or die("Unable to open file!");
                 fwrite($myfile, "**** starts here ***** \n");
                 fclose($myfile);
             }
-            
-            // Abre el fichero para obtener el contenido existente            
+
+            // Abre el fichero para obtener el contenido existente
             $actual = file_get_contents($fichero);
-            
+
             $log = "*****************************\n";
             $log .= 'time: ' . date('Y-m-d H:i:s') . "\n\n";
             //$log .= "***********************************************************\n\n";
             //$log .= "DATA ARRAY: " . json_encode($data_array) . "\n\n";
-            
+
             $keys = array_keys($data_array);
-            
-            foreach($keys as $key){
+
+            foreach ($keys as $key) {
                 $content = (is_array($data_array[$key])) ? json_encode($data_array[$key]) : $data_array[$key];
                 $log .= "$key: $content \n";
             }
-            
+
             $log .= "\n\n\n";
-            
+
             $log .= $actual;
-            
+
             // Escribe el contenido al fichero
             file_put_contents($fichero, $log);
-            
+
             return;
-            
+
         } catch (\Exception $e) {
             /** TODO: check why the exception is not catching errors */
             file_put_contents($fichero, $e->getMessage());
