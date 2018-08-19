@@ -9,7 +9,7 @@ class IITools extends Controller
 {
     public static $base_image_path = 'uploads/images/';
 
-    public static function file_upload($target_dir, $file_name, $file_limit_in_KB = null, $override = false)
+    public static function file_upload($input_name, $target_dir, $file_name, $file_limit_in_KB = null, $override = false)
     {
         self::directories($target_dir);
 
@@ -18,15 +18,13 @@ class IITools extends Controller
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
         // Check if image file is a actual image or fake image
-        if (isset($_POST["submit"])) {
-            $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-            if ($check !== false) {
-                //echo "File is an image - " . $check["mime"] . ".";
-                $uploadOk = 1;
-            } else {
-                //echo "File is not an image.";
-                $uploadOk = 0;
-            }
+        $check = getimagesize($_FILES[$input_name]["tmp_name"]);
+        if ($check !== false) {
+            //echo "File is an image - " . $check["mime"] . ".";
+            $uploadOk = 1;
+        } else {
+            //echo "File is not an image.";
+            $uploadOk = 0;
         }
 
         // Check if file already exists
@@ -67,7 +65,8 @@ class IITools extends Controller
         }
     }
 
-    public static function directories($directory_path){
+    public static function directories($directory_path)
+    {
 
         $dir_array = explode('/', $directory_path);
 
@@ -79,7 +78,7 @@ class IITools extends Controller
                 mkdir($base_path);
             }
         }
-        
+
         $current_dirname = '';
         foreach ($dir_array as $directory_name) {
             $current_dirname .= $directory_name . '/';
